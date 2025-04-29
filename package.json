@@ -1,0 +1,26 @@
+{
+  "name": "vue-loan-calculator",
+  "version": "1.0.0",
+  "description": "vue3版的房贷计算器，自动计算房贷，并可根据收入来计算余额以及提前还款的时间",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "vue": "^3.3.4",
+    "element-plus": "^2.5.3"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^4.2.3",
+    "autoprefixer": "^10.4.14",
+    "postcss": "^8.4.24",
+    "tailwindcss": "^3.3.2",
+    "typescript": "^5.0.4",
+    "vite": "^4.3.9",
+    "vue-tsc": "^1.8.3",
+    "unplugin-auto-import": "^0.17.3",
+    "unplugin-vue-components": "^0.26.0"
+  }
+}
