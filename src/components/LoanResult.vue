@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { MonthlyRecord, LoanType, LoanInfo } from '../types/loan';
+import { MonthlyRecord, LoanInfo } from '../types/loan';
 
 const props = defineProps<{
   records: MonthlyRecord[];
