@@ -1,0 +1,1 @@
+rsync -av -r ./dist/* root@124.71.97.110:/root/apps/loan
