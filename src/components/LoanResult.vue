@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { MonthlyRecord } from '../types/loan';
+import { computed } from 'vue';
+import { MonthlyRecord, LoanType, LoanInfo } from '../types/loan';
 
-defineProps<{
+const props = defineProps<{
   records: MonthlyRecord[];
+  loans: LoanInfo[]; // 添加 loans 属性
 }>();
 
 const formatMoney = (amount: number): string => {
@@ -11,6 +13,27 @@ const formatMoney = (amount: number): string => {
     maximumFractionDigits: 2,
   }).format(amount);
 };
+
+// 计算每月常规还款金额（不包括提前还款）
+const getRegularPayment = (record: MonthlyRecord) => {
+  return record.totalPayment - (record.isPrepayment ? record.prepaymentAmount : 0);
+};
+
+// 计算每月常规本金（不包括提前还款）
+const getRegularPrincipal = (record: MonthlyRecord) => {
+  return record.principal - (record.isPrepayment ? record.prepaymentAmount : 0);
+};
+
+// 计算总贷款本金
+const totalLoanPrincipal = computed(() => {
+  return props.loans.reduce((sum, loan) => sum + loan.amount, 0);
+});
+
+// 获取月供金额
+const monthlyPayment = computed(() => {
+  if (!props.records.length) return 0;
+  return getRegularPayment(props.records[0]);
+});
 </script>
 
 <template>
@@ -23,34 +46,62 @@ const formatMoney = (amount: number): string => {
 
     <el-table :data="records" style="width: 100%" :stripe="true">
       <el-table-column prop="month" label="月份" width="80" />
+
       <el-table-column label="还款明细" min-width="250">
         <template #default="{ row }">
-          <div>
-            {{ formatMoney(row.principal - (row.isPrepayment ? row.prepaymentAmount : 0)) }} +
-            {{ formatMoney(row.interest) }} =
-            {{ formatMoney(row.totalPayment - (row.isPrepayment ? row.prepaymentAmount : 0)) }}
-          </div>
-          <div v-if="row.isPrepayment" class="mt-1 text-green-600">
-            提前还款：{{ formatMoney(row.prepaymentAmount) }}
-            <el-tag type="success" size="small" class="ml-2">提前还款</el-tag>
+          <div class="flex flex-col gap-1">
+            <!-- 常规还款 -->
+            <div>本金：{{ formatMoney(getRegularPrincipal(row)) }}</div>
+            <div>利息：{{ formatMoney(row.interest) }}</div>
+            <div class="font-bold">月供：{{ formatMoney(getRegularPayment(row)) }}</div>
+
+            <!-- 提前还款信息 -->
+            <div v-if="row.isPrepayment" class="mt-1 text-green-600">
+              提前还款：{{ formatMoney(row.prepaymentAmount) }}
+              <el-tag type="success" size="small" class="ml-2">提前还款</el-tag>
+            </div>
+
+            <!-- 当月还款总额 -->
+            <div v-if="row.isPrepayment" class="mt-1 font-bold">当月总还款：{{ formatMoney(row.totalPayment) }}</div>
           </div>
         </template>
       </el-table-column>
+
       <el-table-column label="剩余贷款" min-width="150">
         <template #default="{ row }">
           {{ formatMoney(row.remainingLoan) }}
         </template>
       </el-table-column>
+
       <el-table-column label="月结余" min-width="150">
         <template #default="{ row }">
           {{ formatMoney(row.monthlyBalance) }}
         </template>
       </el-table-column>
+
       <el-table-column label="总存款" min-width="150">
         <template #default="{ row }">
           {{ formatMoney(row.totalSavings) }}
         </template>
       </el-table-column>
     </el-table>
+
+    <!-- 贷款汇总信息 -->
+    <div class="mt-6 p-4 bg-gray-50 rounded">
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <div class="text-gray-600">总贷款本金</div>
+          <div class="text-xl font-bold">
+            {{ formatMoney(totalLoanPrincipal) }}
+          </div>
+        </div>
+        <div>
+          <div class="text-gray-600">月供</div>
+          <div class="text-xl font-bold">
+            {{ formatMoney(monthlyPayment) }}
+          </div>
+        </div>
+      </div>
+    </div>
   </el-card>
 </template>

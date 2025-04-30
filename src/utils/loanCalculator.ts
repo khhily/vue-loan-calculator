@@ -39,7 +39,7 @@ export class LoanCalculator {
         monthlyBalance: 0,
         totalSavings: currentSavings,
         isPrepayment: false,
-        prepaymentAmount: 0, // 新增字段
+        prepaymentAmount: 0,
       };
 
       // 计算每个贷款的当月利息和本金
@@ -49,15 +49,12 @@ export class LoanCalculator {
         const monthlyRate = loan.rate / 12 / 100;
         const monthlyPayment = monthlyPayments[index];
 
-        // 当月利息 = 剩余本金 × 月利率
         const interest = loan.remainingAmount * monthlyRate;
-        // 当月本金 = 月供 - 当月利息
         const principal = Math.min(monthlyPayment - interest, loan.remainingAmount);
 
         monthlyRecord.principal += principal;
         monthlyRecord.interest += interest;
 
-        // 更新剩余本金
         loan.remainingAmount -= principal;
       });
 
@@ -67,24 +64,29 @@ export class LoanCalculator {
 
       // 检查是否可以提前还款
       if (currentSavings >= financeInfo.prepaymentThreshold) {
-        const prepaymentAmount = Math.min(currentSavings, totalLoanAmount);
+        // 计算可提前还款金额（向下取整到最近的10000的倍数）
+        const maxPrepayment = Math.min(currentSavings, totalLoanAmount);
+        const prepaymentAmount = Math.floor(maxPrepayment / 10000) * 10000;
 
-        // 记录提前还款金额
-        monthlyRecord.prepaymentAmount = prepaymentAmount;
+        if (prepaymentAmount >= 10000) {
+          // 只有当可以还款至少1万时才进行提前还款
+          // 记录提前还款金额
+          monthlyRecord.prepaymentAmount = prepaymentAmount;
 
-        // 按比例分配提前还款金额到各个贷款
-        const totalRemaining = remainingLoans.reduce((sum, loan) => sum + loan.remainingAmount, 0);
-        remainingLoans.forEach((loan) => {
-          if (loan.remainingAmount <= 0) return;
+          // 按比例分配提前还款金额到各个贷款
+          const totalRemaining = remainingLoans.reduce((sum, loan) => sum + loan.remainingAmount, 0);
+          remainingLoans.forEach((loan) => {
+            if (loan.remainingAmount <= 0) return;
 
-          const proportion = loan.remainingAmount / totalRemaining;
-          const loanPrepayment = prepaymentAmount * proportion;
-          loan.remainingAmount -= loanPrepayment;
-          monthlyRecord.principal += loanPrepayment;
-        });
+            const proportion = loan.remainingAmount / totalRemaining;
+            const loanPrepayment = Math.round(prepaymentAmount * proportion);
+            loan.remainingAmount -= loanPrepayment;
+            monthlyRecord.principal += loanPrepayment;
+          });
 
-        currentSavings -= prepaymentAmount;
-        monthlyRecord.isPrepayment = true;
+          currentSavings -= prepaymentAmount;
+          monthlyRecord.isPrepayment = true;
+        }
       }
 
       // 更新总贷款余额

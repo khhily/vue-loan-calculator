@@ -3,11 +3,13 @@ import { ref } from 'vue';
 import LoanForm from './components/LoanForm.vue';
 import LoanResult from './components/LoanResult.vue';
 import { LoanCalculator } from './utils/loanCalculator';
-import type { MonthlyRecord } from './types/loan';
+import type { MonthlyRecord, LoanInfo } from './types/loan';
 
 const records = ref<MonthlyRecord[]>([]);
+const loans = ref<LoanInfo[]>([]);
 
-const handleCalculate = (data: any) => {
+const handleCalculate = (data: { loans: LoanInfo[]; financeInfo: any }) => {
+  loans.value = data.loans;
   records.value = LoanCalculator.calculateMonthlyDetails(data.loans, data.financeInfo);
 };
 </script>
@@ -23,7 +25,7 @@ const handleCalculate = (data: any) => {
     <el-main>
       <div class="max-w-7xl mx-auto py-6">
         <LoanForm @calculate="handleCalculate" />
-        <LoanResult v-if="records.length > 0" :records="records" />
+        <LoanResult v-if="records.length > 0" :records="records" :loans="loans" />
       </div>
     </el-main>
   </el-container>
