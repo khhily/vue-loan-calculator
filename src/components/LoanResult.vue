@@ -4,7 +4,7 @@ import { MonthlyRecord, LoanInfo } from '../types/loan';
 
 const props = defineProps<{
   records: MonthlyRecord[];
-  loans: LoanInfo[]; // 添加 loans 属性
+  loans: LoanInfo[];
 }>();
 
 const formatMoney = (amount: number): string => {
@@ -33,6 +33,26 @@ const totalLoanPrincipal = computed(() => {
 const monthlyPayment = computed(() => {
   if (!props.records.length) return 0;
   return getRegularPayment(props.records[0]);
+});
+
+// 计算还款总月份
+const totalRepaymentMonths = computed(() => {
+  return props.records.length;
+});
+
+// 格式化为"几年零几个月"
+const formattedRepaymentPeriod = computed(() => {
+  const months = totalRepaymentMonths.value;
+  const years = Math.floor(months / 12);
+  const remainingMonths = months % 12;
+
+  if (years === 0) {
+    return `${remainingMonths}个月`;
+  } else if (remainingMonths === 0) {
+    return `${years}年`;
+  } else {
+    return `${years}年零${remainingMonths}个月`;
+  }
 });
 </script>
 
@@ -88,7 +108,7 @@ const monthlyPayment = computed(() => {
 
     <!-- 贷款汇总信息 -->
     <div class="mt-6 p-4 bg-gray-50 rounded">
-      <div class="grid grid-cols-2 gap-4">
+      <div class="grid grid-cols-3 gap-4">
         <div>
           <div class="text-gray-600">总贷款本金</div>
           <div class="text-xl font-bold">
@@ -99,6 +119,12 @@ const monthlyPayment = computed(() => {
           <div class="text-gray-600">月供</div>
           <div class="text-xl font-bold">
             {{ formatMoney(monthlyPayment) }}
+          </div>
+        </div>
+        <div>
+          <div class="text-gray-600">还款时间</div>
+          <div class="text-xl font-bold">
+            {{ formattedRepaymentPeriod }}
           </div>
         </div>
       </div>

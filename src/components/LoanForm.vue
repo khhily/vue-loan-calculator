@@ -1,20 +1,51 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
 import { LoanType, LoanInfo, FinanceInfo } from '../types/loan';
 
 const emit = defineEmits(['calculate']);
+
+// 总房款额和首付比例
+const totalHousePrice = ref<number>(0);
+const downPaymentRatio = ref<number>(30); // 默认30%
+
+// 计算贷款总额
+const totalLoanAmount = computed(() => {
+  return totalHousePrice.value * (1 - downPaymentRatio.value / 100);
+});
+
+// 自动分配贷款金额
+const distributeLoanAmount = () => {
+  const total = totalLoanAmount.value;
+  const maxHousingFund = 1430000; // 公积金贷款上限143万
+
+  // 优先使用公积金贷款
+  if (total <= maxHousingFund) {
+    // 如果总贷款额小于等于公积金上限，全部使用公积金贷款
+    loans.value[0].amount = total;
+    loans.value[1].amount = 0;
+  } else {
+    // 如果总贷款额超过公积金上限，公积金贷款用到上限，剩余部分使用商业贷款
+    loans.value[0].amount = maxHousingFund;
+    loans.value[1].amount = total - maxHousingFund;
+  }
+};
+
+// 监听总房款额和首付比例变化，自动计算贷款金额
+watch([totalHousePrice, downPaymentRatio], () => {
+  distributeLoanAmount();
+});
 
 const loans = ref<LoanInfo[]>([
   {
     type: LoanType.HOUSING_FUND,
     amount: 0,
-    rate: 3.1,
+    rate: 2.85, // 修改为2.85
     years: 30,
   },
   {
     type: LoanType.COMMERCIAL,
     amount: 0,
-    rate: 4.35,
+    rate: 3.1, // 修改为3.1
     years: 30,
   },
 ]);
@@ -28,6 +59,20 @@ watch(commonYears, (newYears) => {
     loan.years = newYears;
   });
 });
+
+// 监听公积金贷款金额变化，确保不超过上限
+watch(
+  () => loans.value[0].amount,
+  (newAmount) => {
+    const maxHousingFund = 1430000;
+    if (newAmount > maxHousingFund) {
+      // 如果超过上限，将超出部分转移到商业贷款
+      const excess = newAmount - maxHousingFund;
+      loans.value[0].amount = maxHousingFund;
+      loans.value[1].amount += excess;
+    }
+  }
+);
 
 const financeInfo = ref<FinanceInfo>({
   monthlyIncome: 0,
@@ -52,10 +97,43 @@ const calculate = () => {
       </div>
     </template>
 
+    <!-- 房价和首付比例 -->
+    <el-form label-width="120px" class="mb-6">
+      <el-row :gutter="20">
+        <el-col :span="12">
+          <el-form-item label="房屋总价">
+            <el-input-number v-model="totalHousePrice" :min="0" :step="100000" :precision="0" controls-position="right">
+              <template #append>元</template>
+            </el-input-number>
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
+          <el-form-item label="首付比例">
+            <el-input-number
+              v-model="downPaymentRatio"
+              :min="0"
+              :max="100"
+              :step="1"
+              :precision="0"
+              controls-position="right"
+            >
+              <template #append>%</template>
+            </el-input-number>
+          </el-form-item>
+        </el-col>
+      </el-row>
+
+      <!-- 显示计算出的贷款总额 -->
+      <el-form-item label="贷款总额">
+        <div class="text-lg font-bold">{{ totalLoanAmount.toLocaleString('zh-CN') }} 元</div>
+        <div class="text-sm text-gray-500 mt-1">(公积金贷款上限为143万，超出部分将使用商业贷款)</div>
+      </el-form-item>
+    </el-form>
+
     <!-- 贷款年限（统一控制） -->
     <el-form label-width="120px" class="mb-6">
       <el-form-item label="贷款年限">
-        <el-input-number v-model="commonYears" :min="1" :max="30" :step="1" :controls="true">
+        <el-input-number v-model="commonYears" :min="1" :max="30" :step="1" controls-position="right">
           <template #append>年</template>
         </el-input-number>
       </el-form-item>
@@ -69,15 +147,23 @@ const calculate = () => {
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item label="贷款金额">
-              <el-input-number v-model="loan.amount" :min="0" :step="10000" :precision="0" :controls="true">
+              <el-input-number
+                v-model="loan.amount"
+                :min="0"
+                :step="10000"
+                :precision="0"
+                controls-position="right"
+                :max="index === 0 ? 1430000 : Infinity"
+              >
                 <template #append>元</template>
               </el-input-number>
+              <div v-if="index === 0" class="text-xs text-gray-500 mt-1">(公积金贷款上限为143万)</div>
             </el-form-item>
           </el-col>
 
           <el-col :span="12">
             <el-form-item label="年利率">
-              <el-input-number v-model="loan.rate" :min="0" :step="0.01" :precision="2" :controls="true">
+              <el-input-number v-model="loan.rate" :min="0" :step="0.01" :precision="2" controls-position="right">
                 <template #append>%</template>
               </el-input-number>
             </el-form-item>
