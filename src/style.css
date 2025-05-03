@@ -1,3 +1,28 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* 添加移动端优化样式 */
+html,
+body {
+  @apply antialiased;
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* 优化 Element Plus 组件在移动端的显示 */
+.el-input-number.w-full .el-input__wrapper {
+  width: 100%;
+}
+
+/* 在小屏幕上减小表格字体大小 */
+@media (max-width: 640px) {
+  .el-table {
+    font-size: 12px;
+  }
+
+  .el-table .cell {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+}

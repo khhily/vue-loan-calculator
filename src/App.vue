@@ -15,15 +15,15 @@ const handleCalculate = (data: { loans: LoanInfo[]; financeInfo: any }) => {
 </script>
 
 <template>
-  <el-container>
+  <el-container class="min-h-screen">
     <el-header class="bg-white shadow">
-      <div class="max-w-7xl mx-auto py-6 px-4">
-        <h1 class="text-3xl font-bold text-gray-900">房贷计算器</h1>
+      <div class="max-w-7xl mx-auto py-4 px-4 sm:px-6">
+        <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">房贷计算器</h1>
       </div>
     </el-header>
 
     <el-main>
-      <div class="max-w-7xl mx-auto py-6">
+      <div class="max-w-7xl mx-auto py-4 px-4 sm:px-6">
         <LoanForm @calculate="handleCalculate" />
         <LoanResult v-if="records.length > 0" :records="records" :loans="loans" />
       </div>

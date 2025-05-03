@@ -93,21 +93,28 @@ const calculate = () => {
   <el-card class="mb-6">
     <template #header>
       <div class="card-header">
-        <span class="text-xl font-bold">贷款信息</span>
+        <span class="text-lg sm:text-xl font-bold">贷款信息</span>
       </div>
     </template>
 
     <!-- 房价和首付比例 -->
-    <el-form label-width="120px" class="mb-6">
-      <el-row :gutter="20">
-        <el-col :span="12">
+    <el-form label-position="top" label-width="auto" class="mb-4">
+      <el-row :gutter="12">
+        <el-col :xs="24" :sm="12">
           <el-form-item label="房屋总价">
-            <el-input-number v-model="totalHousePrice" :min="0" :step="100000" :precision="0" controls-position="right">
+            <el-input-number
+              v-model="totalHousePrice"
+              :min="0"
+              :step="100000"
+              :precision="0"
+              controls-position="right"
+              class="w-full"
+            >
               <template #append>元</template>
             </el-input-number>
           </el-form-item>
         </el-col>
-        <el-col :span="12">
+        <el-col :xs="24" :sm="12">
           <el-form-item label="首付比例">
             <el-input-number
               v-model="downPaymentRatio"
@@ -116,6 +123,7 @@ const calculate = () => {
               :step="1"
               :precision="0"
               controls-position="right"
+              class="w-full"
             >
               <template #append>%</template>
             </el-input-number>
@@ -125,27 +133,34 @@ const calculate = () => {
 
       <!-- 显示计算出的贷款总额 -->
       <el-form-item label="贷款总额">
-        <div class="text-lg font-bold">{{ totalLoanAmount.toLocaleString('zh-CN') }} 元</div>
-        <div class="text-sm text-gray-500 mt-1">(公积金贷款上限为143万，超出部分将使用商业贷款)</div>
+        <div class="text-base sm:text-lg font-bold">{{ totalLoanAmount.toLocaleString('zh-CN') }} 元</div>
+        <div class="text-xs sm:text-sm text-gray-500 mt-1">(公积金贷款上限为143万，超出部分将使用商业贷款)</div>
       </el-form-item>
     </el-form>
 
     <!-- 贷款年限（统一控制） -->
-    <el-form label-width="120px" class="mb-6">
+    <el-form label-position="top" label-width="auto" class="mb-4">
       <el-form-item label="贷款年限">
-        <el-input-number v-model="commonYears" :min="1" :max="30" :step="1" controls-position="right">
+        <el-input-number
+          v-model="commonYears"
+          :min="1"
+          :max="30"
+          :step="1"
+          controls-position="right"
+          class="w-full sm:w-1/2"
+        >
           <template #append>年</template>
         </el-input-number>
       </el-form-item>
     </el-form>
 
     <!-- 两种贷款的金额和利率设置 -->
-    <div v-for="(loan, index) in loans" :key="index" class="mb-6">
+    <div v-for="(loan, index) in loans" :key="index" class="mb-4">
       <el-divider>{{ loan.type }}</el-divider>
 
-      <el-form :model="loan" label-width="120px">
-        <el-row :gutter="20">
-          <el-col :span="12">
+      <el-form :model="loan" label-position="top" label-width="auto">
+        <el-row :gutter="12">
+          <el-col :xs="24" :sm="12">
             <el-form-item label="贷款金额">
               <el-input-number
                 v-model="loan.amount"
@@ -154,6 +169,7 @@ const calculate = () => {
                 :precision="0"
                 controls-position="right"
                 :max="index === 0 ? 1430000 : Infinity"
+                class="w-full"
               >
                 <template #append>元</template>
               </el-input-number>
@@ -161,9 +177,16 @@ const calculate = () => {
             </el-form-item>
           </el-col>
 
-          <el-col :span="12">
+          <el-col :xs="24" :sm="12">
             <el-form-item label="年利率">
-              <el-input-number v-model="loan.rate" :min="0" :step="0.01" :precision="2" controls-position="right">
+              <el-input-number
+                v-model="loan.rate"
+                :min="0"
+                :step="0.01"
+                :precision="2"
+                controls-position="right"
+                class="w-full"
+              >
                 <template #append>%</template>
               </el-input-number>
             </el-form-item>
@@ -174,37 +197,50 @@ const calculate = () => {
 
     <el-divider>个人财务信息</el-divider>
 
-    <el-form :model="financeInfo" label-width="120px">
-      <el-row :gutter="20">
-        <el-col :span="12">
+    <!-- 个人财务信息部分 -->
+    <el-form :model="financeInfo" label-position="top" label-width="auto">
+      <el-row :gutter="12">
+        <el-col :xs="24" :sm="12">
           <el-form-item label="月收入">
-            <el-input-number v-model="financeInfo.monthlyIncome" :min="0" :step="1000" :controls="true">
+            <el-input-number v-model="financeInfo.monthlyIncome" :min="0" :step="1000" :controls="true" class="w-full">
               <template #append>元</template>
             </el-input-number>
           </el-form-item>
         </el-col>
 
-        <el-col :span="12">
+        <el-col :xs="24" :sm="12">
           <el-form-item label="月支出">
-            <el-input-number v-model="financeInfo.monthlyExpense" :min="0" :step="1000" :controls="true">
+            <el-input-number v-model="financeInfo.monthlyExpense" :min="0" :step="1000" :controls="true" class="w-full">
               <template #append>元</template>
             </el-input-number>
           </el-form-item>
         </el-col>
       </el-row>
 
-      <el-row :gutter="20">
-        <el-col :span="12">
+      <el-row :gutter="12">
+        <el-col :xs="24" :sm="12">
           <el-form-item label="初始存款">
-            <el-input-number v-model="financeInfo.initialSavings" :min="0" :step="10000" :controls="true">
+            <el-input-number
+              v-model="financeInfo.initialSavings"
+              :min="0"
+              :step="10000"
+              :controls="true"
+              class="w-full"
+            >
               <template #append>元</template>
             </el-input-number>
           </el-form-item>
         </el-col>
 
-        <el-col :span="12">
+        <el-col :xs="24" :sm="12">
           <el-form-item label="提前还款阈值">
-            <el-input-number v-model="financeInfo.prepaymentThreshold" :min="0" :step="10000" :controls="true">
+            <el-input-number
+              v-model="financeInfo.prepaymentThreshold"
+              :min="0"
+              :step="10000"
+              :controls="true"
+              class="w-full"
+            >
               <template #append>元</template>
             </el-input-number>
           </el-form-item>
