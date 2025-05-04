@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue';
-import { LoanType, LoanInfo, FinanceInfo } from '../types/loan';
+import { LoanType, LoanInfo, FinanceInfo, PrepaymentStrategy } from '../types/loan';
 
 const emit = defineEmits(['calculate']);
 
@@ -78,7 +78,8 @@ const financeInfo = ref<FinanceInfo>({
   monthlyIncome: 0,
   monthlyExpense: 0,
   initialSavings: 0,
-  prepaymentThreshold: 200000,
+  prepaymentThreshold: 100000, // 修改默认值为10万
+  prepaymentStrategy: PrepaymentStrategy.SHORTEN_TERM, // 默认缩短还款期限
 });
 
 const calculate = () => {
@@ -246,6 +247,18 @@ const calculate = () => {
           </el-form-item>
         </el-col>
       </el-row>
+
+      <!-- 提前还款策略选择 -->
+      <el-form-item label="提前还款策略">
+        <el-radio-group v-model="financeInfo.prepaymentStrategy" class="w-full">
+          <el-radio :label="PrepaymentStrategy.SHORTEN_TERM" border class="mb-2 w-full sm:w-auto">
+            缩短还款期限（月供不变）
+          </el-radio>
+          <el-radio :label="PrepaymentStrategy.REDUCE_PAYMENT" border class="w-full sm:w-auto">
+            减少月供（还款期限不变）
+          </el-radio>
+        </el-radio-group>
+      </el-form-item>
     </el-form>
 
     <div class="flex justify-center mt-6">

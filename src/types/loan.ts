@@ -4,6 +4,12 @@ export enum LoanType {
   COMMERCIAL = '商业贷款',
 }
 
+// 提前还款策略
+export enum PrepaymentStrategy {
+  SHORTEN_TERM = 'shorten_term', // 缩短还款期限
+  REDUCE_PAYMENT = 'reduce_payment', // 减少月供
+}
+
 // 贷款信息
 export interface LoanInfo {
   type: LoanType;
@@ -18,6 +24,7 @@ export interface FinanceInfo {
   monthlyExpense: number; // 月支出
   initialSavings: number; // 初始存款
   prepaymentThreshold: number; // 提前还款阈值
+  prepaymentStrategy: PrepaymentStrategy; // 提前还款策略
 }
 
 // 月度还款记录
@@ -31,4 +38,5 @@ export interface MonthlyRecord {
   totalSavings: number; // 总存款
   isPrepayment: boolean; // 是否提前还款
   prepaymentAmount: number; // 提前还款金额
+  monthlyPayment?: number; // 月供（可能会变化）
 }
