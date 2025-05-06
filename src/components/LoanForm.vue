@@ -8,6 +8,11 @@ const emit = defineEmits(['calculate']);
 const totalHousePrice = ref<number>(0);
 const downPaymentRatio = ref<number>(15); // 默认改为15%
 
+// 计算首付金额
+const downPaymentAmount = computed(() => {
+  return totalHousePrice.value * (downPaymentRatio.value / 100);
+});
+
 // 计算贷款总额
 const totalLoanAmount = computed(() => {
   return totalHousePrice.value * (1 - downPaymentRatio.value / 100);
@@ -132,11 +137,20 @@ const calculate = () => {
         </el-col>
       </el-row>
 
-      <!-- 显示计算出的贷款总额 -->
-      <el-form-item label="贷款总额">
-        <div class="text-base sm:text-lg font-bold">{{ totalLoanAmount.toLocaleString('zh-CN') }} 元</div>
-        <div class="text-xs sm:text-sm text-gray-500 mt-1">(公积金贷款上限为143万，超出部分将使用商业贷款)</div>
-      </el-form-item>
+      <!-- 显示计算出的首付金额和贷款总额 -->
+      <el-row :gutter="12">
+        <el-col :xs="24" :sm="12">
+          <el-form-item label="首付金额">
+            <div class="text-base sm:text-lg font-bold">{{ downPaymentAmount.toLocaleString('zh-CN') }} 元</div>
+          </el-form-item>
+        </el-col>
+        <el-col :xs="24" :sm="12">
+          <el-form-item label="贷款总额">
+            <div class="text-base sm:text-lg font-bold">{{ totalLoanAmount.toLocaleString('zh-CN') }} 元</div>
+            <div class="text-xs sm:text-sm text-gray-500 mt-1">(公积金贷款上限为143万，超出部分将使用商业贷款)</div>
+          </el-form-item>
+        </el-col>
+      </el-row>
     </el-form>
 
     <!-- 贷款年限（统一控制） -->
