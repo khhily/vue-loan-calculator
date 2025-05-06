@@ -251,7 +251,7 @@ const calculate = () => {
       <!-- 提前还款策略选择 -->
       <el-form-item label="提前还款策略">
         <el-radio-group v-model="financeInfo.prepaymentStrategy" class="w-full">
-          <el-radio :label="PrepaymentStrategy.SHORTEN_TERM" border class="mb-2 w-full sm:w-auto">
+          <el-radio :label="PrepaymentStrategy.SHORTEN_TERM" border class="mb-2 sm:mb-0 w-full sm:w-auto">
             缩短还款期限（月供不变）
           </el-radio>
           <el-radio :label="PrepaymentStrategy.REDUCE_PAYMENT" border class="w-full sm:w-auto">
