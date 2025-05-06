@@ -6,7 +6,7 @@ const emit = defineEmits(['calculate']);
 
 // 总房款额和首付比例
 const totalHousePrice = ref<number>(0);
-const downPaymentRatio = ref<number>(30); // 默认30%
+const downPaymentRatio = ref<number>(15); // 默认改为15%
 
 // 计算贷款总额
 const totalLoanAmount = computed(() => {

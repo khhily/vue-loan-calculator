@@ -54,6 +54,37 @@ const formattedRepaymentPeriod = computed(() => {
     return `${years}年零${remainingMonths}个月`;
   }
 });
+
+// 计算理论总利息（如果按照完整贷款期限还款）
+const theoreticalTotalInterest = computed(() => {
+  return props.loans.reduce((sum, loan) => {
+    const monthlyRate = loan.rate / 12 / 100;
+    const totalMonths = loan.years * 12;
+    const monthlyPayment =
+      (loan.amount * monthlyRate * Math.pow(1 + monthlyRate, totalMonths)) /
+      (Math.pow(1 + monthlyRate, totalMonths) - 1);
+
+    const totalPayment = monthlyPayment * totalMonths;
+    const totalInterest = totalPayment - loan.amount;
+
+    return sum + totalInterest;
+  }, 0);
+});
+
+// 计算实际支付的总利息
+const actualTotalInterest = computed(() => {
+  return props.records.reduce((sum, record) => sum + record.interest, 0);
+});
+
+// 计算节省的利息
+const savedInterest = computed(() => {
+  return theoreticalTotalInterest.value - actualTotalInterest.value;
+});
+
+// 计算实际总还款金额
+const actualTotalPayment = computed(() => {
+  return totalLoanPrincipal.value + actualTotalInterest.value;
+});
 </script>
 
 <template>
@@ -66,7 +97,7 @@ const formattedRepaymentPeriod = computed(() => {
 
     <!-- 贷款汇总信息 - 移动到表格前面，让用户先看到重要信息 -->
     <div class="mb-6 p-4 bg-gray-50 rounded">
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
         <div class="mb-2 sm:mb-0">
           <div class="text-gray-600">总贷款本金</div>
           <div class="text-lg sm:text-xl font-bold">
@@ -84,6 +115,36 @@ const formattedRepaymentPeriod = computed(() => {
           <div class="text-lg sm:text-xl font-bold">
             {{ formattedRepaymentPeriod }}
           </div>
+        </div>
+      </div>
+
+      <!-- 新增利息信息部分 -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4 pt-4 border-t border-gray-200">
+        <div class="mb-2 sm:mb-0">
+          <div class="text-gray-600">理论总利息</div>
+          <div class="text-lg sm:text-xl font-bold">
+            {{ formatMoney(theoreticalTotalInterest) }}
+          </div>
+        </div>
+        <div class="mb-2 sm:mb-0">
+          <div class="text-gray-600">实际支付利息</div>
+          <div class="text-lg sm:text-xl font-bold text-green-600">
+            {{ formatMoney(actualTotalInterest) }}
+          </div>
+        </div>
+        <div>
+          <div class="text-gray-600">节省利息</div>
+          <div class="text-lg sm:text-xl font-bold text-green-600">
+            {{ formatMoney(savedInterest) }}
+          </div>
+        </div>
+      </div>
+
+      <!-- 实际总还款金额 -->
+      <div class="mt-4 pt-4 border-t border-gray-200">
+        <div class="text-gray-600">实际总还款金额</div>
+        <div class="text-lg sm:text-xl font-bold">
+          {{ formatMoney(actualTotalPayment) }}
         </div>
       </div>
     </div>
