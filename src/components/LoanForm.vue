@@ -6,7 +6,7 @@ const emit = defineEmits(['calculate']);
 
 // 总房款额和首付比例
 const totalHousePrice = ref<number>(0);
-const downPaymentRatio = ref<number>(15); // 默认改为15%
+const downPaymentRatio = ref<number>(20); // 默认改为20%
 
 // 计算首付金额
 const downPaymentAmount = computed(() => {
@@ -18,10 +18,33 @@ const totalLoanAmount = computed(() => {
   return totalHousePrice.value * (1 - downPaymentRatio.value / 100);
 });
 
-// 自动分配贷款金额
+// 添加公积金缴费基数
+const housingFundBase = ref<number>(0);
+
+// 计算公积金贷款上限
+const maxHousingFundLoan = computed(() => {
+  // 月供不能超过缴费基数的50%
+  if (housingFundBase.value <= 0) return 1430000; // 如果未设置缴费基数，使用默认上限
+
+  const monthlyRate = loans.value[0].rate / 12 / 100;
+  const totalMonths = loans.value[0].years * 12;
+  const maxMonthlyPayment = housingFundBase.value * 0.5;
+
+  // 根据最大月供反推最大贷款额
+  // 公式: 贷款额 = 月供 * ((1+r)^n - 1) / (r * (1+r)^n)
+  const denominator = monthlyRate * Math.pow(1 + monthlyRate, totalMonths);
+  const numerator = Math.pow(1 + monthlyRate, totalMonths) - 1;
+  const maxLoan = maxMonthlyPayment * (numerator / denominator);
+
+  return Math.floor(maxLoan);
+});
+
+// 修改自动分配贷款金额函数
 const distributeLoanAmount = () => {
   const total = totalLoanAmount.value;
-  const maxHousingFund = 1430000; // 公积金贷款上限143万
+
+  // 使用计算的公积金贷款上限
+  const maxHousingFund = maxHousingFundLoan.value;
 
   // 优先使用公积金贷款
   if (total <= maxHousingFund) {
@@ -40,11 +63,16 @@ watch([totalHousePrice, downPaymentRatio], () => {
   distributeLoanAmount();
 });
 
+// 监听公积金缴费基数变化，重新计算贷款分配
+watch([totalHousePrice, downPaymentRatio, housingFundBase], () => {
+  distributeLoanAmount();
+});
+
 const loans = ref<LoanInfo[]>([
   {
     type: LoanType.HOUSING_FUND,
     amount: 0,
-    rate: 2.85, // 修改为2.85
+    rate: 2.6, // 修改为2.6
     years: 30,
   },
   {
@@ -65,16 +93,20 @@ watch(commonYears, (newYears) => {
   });
 });
 
-// 监听公积金贷款金额变化，确保不超过上限
+// 监听公积金贷款金额变化，自动调整商业贷款金额
 watch(
   () => loans.value[0].amount,
   (newAmount) => {
-    const maxHousingFund = 1430000;
+    // 首先确保不超过上限
+    const maxHousingFund = maxHousingFundLoan.value;
     if (newAmount > maxHousingFund) {
       // 如果超过上限，将超出部分转移到商业贷款
       const excess = newAmount - maxHousingFund;
       loans.value[0].amount = maxHousingFund;
       loans.value[1].amount += excess;
+    } else {
+      // 正常情况下，商业贷款金额 = 贷款总额 - 公积金贷款金额
+      loans.value[1].amount = Math.max(0, totalLoanAmount.value - newAmount);
     }
   }
 );
@@ -137,6 +169,25 @@ const calculate = () => {
         </el-col>
       </el-row>
 
+      <!-- 公积金缴费基数 -->
+      <el-row :gutter="12">
+        <el-col :xs="24" :sm="12">
+          <el-form-item label="公积金缴费基数">
+            <el-input-number
+              v-model="housingFundBase"
+              :min="0"
+              :step="1000"
+              :precision="0"
+              controls-position="right"
+              class="w-full"
+            >
+              <template #append>元</template>
+            </el-input-number>
+            <div class="text-xs text-gray-500 mt-1">(用于计算公积金贷款上限)</div>
+          </el-form-item>
+        </el-col>
+      </el-row>
+
       <!-- 显示计算出的首付金额和贷款总额 -->
       <el-row :gutter="12">
         <el-col :xs="24" :sm="12">
@@ -147,7 +198,9 @@ const calculate = () => {
         <el-col :xs="24" :sm="12">
           <el-form-item label="贷款总额">
             <div class="text-base sm:text-lg font-bold">{{ totalLoanAmount.toLocaleString('zh-CN') }} 元</div>
-            <div class="text-xs sm:text-sm text-gray-500 mt-1">(公积金贷款上限为143万，超出部分将使用商业贷款)</div>
+            <div class="text-xs sm:text-sm text-gray-500 mt-1">
+              (公积金贷款月供不能超过缴费基数的50%，超出部分将使用商业贷款)
+            </div>
           </el-form-item>
         </el-col>
       </el-row>
@@ -188,7 +241,9 @@ const calculate = () => {
               >
                 <template #append>元</template>
               </el-input-number>
-              <div v-if="index === 0" class="text-xs text-gray-500 mt-1">(公积金贷款上限为143万)</div>
+              <div v-if="index === 0" class="text-xs text-gray-500 mt-1">
+                (公积金贷款上限为{{ maxHousingFundLoan.toLocaleString('zh-CN') }}元)
+              </div>
             </el-form-item>
           </el-col>
 
