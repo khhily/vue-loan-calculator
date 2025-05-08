@@ -4,16 +4,16 @@ import { LoanType, LoanInfo, FinanceInfo, PrepaymentStrategy } from '../types/lo
 
 const emit = defineEmits(['calculate']);
 
-// 总房款额和首付比例
+// 总房款额(万元)和首付比例
 const totalHousePrice = ref<number>(0);
-const downPaymentRatio = ref<number>(20); // 默认改为20%
+const downPaymentRatio = ref<number>(20); // 默认20%
 
-// 计算首付金额
+// 计算首付金额(万元)
 const downPaymentAmount = computed(() => {
   return totalHousePrice.value * (downPaymentRatio.value / 100);
 });
 
-// 计算贷款总额
+// 计算贷款总额(万元)
 const totalLoanAmount = computed(() => {
   return totalHousePrice.value * (1 - downPaymentRatio.value / 100);
 });
@@ -21,10 +21,10 @@ const totalLoanAmount = computed(() => {
 // 添加公积金缴费基数
 const housingFundBase = ref<number>(0);
 
-// 计算公积金贷款上限
+// 计算公积金贷款上限(万元)
 const maxHousingFundLoan = computed(() => {
   // 月供不能超过缴费基数的50%
-  if (housingFundBase.value <= 0) return 1430000; // 如果未设置缴费基数，使用默认上限
+  if (housingFundBase.value <= 0) return 143; // 如果未设置缴费基数，使用默认上限(万元)
 
   const monthlyRate = loans.value[0].rate / 12 / 100;
   const totalMonths = loans.value[0].years * 12;
@@ -36,14 +36,15 @@ const maxHousingFundLoan = computed(() => {
   const numerator = Math.pow(1 + monthlyRate, totalMonths) - 1;
   const maxLoan = maxMonthlyPayment * (numerator / denominator);
 
-  return Math.floor(maxLoan);
+  // 转换为万元并取整
+  return Math.floor(maxLoan / 10000);
 });
 
 // 修改自动分配贷款金额函数
 const distributeLoanAmount = () => {
-  const total = totalLoanAmount.value;
+  const total = totalLoanAmount.value; // 已经是万元单位
 
-  // 使用计算的公积金贷款上限
+  // 使用计算的公积金贷款上限(万元)
   const maxHousingFund = maxHousingFundLoan.value;
 
   // 优先使用公积金贷款
@@ -120,8 +121,14 @@ const financeInfo = ref<FinanceInfo>({
 });
 
 const calculate = () => {
+  // 将贷款金额从万元转换为元
+  const loansInYuan = loans.value.map((loan) => ({
+    ...loan,
+    amount: loan.amount * 10000, // 万元转换为元
+  }));
+
   emit('calculate', {
-    loans: loans.value,
+    loans: loansInYuan,
     financeInfo: financeInfo.value,
   });
 };
@@ -143,12 +150,12 @@ const calculate = () => {
             <el-input-number
               v-model="totalHousePrice"
               :min="0"
-              :step="100000"
-              :precision="0"
+              :step="1"
+              :precision="2"
               controls-position="right"
               class="w-full"
             >
-              <template #append>元</template>
+              <template #append>万元</template>
             </el-input-number>
           </el-form-item>
         </el-col>
@@ -192,12 +199,12 @@ const calculate = () => {
       <el-row :gutter="12">
         <el-col :xs="24" :sm="12">
           <el-form-item label="首付金额">
-            <div class="text-base sm:text-lg font-bold">{{ downPaymentAmount.toLocaleString('zh-CN') }} 元</div>
+            <div class="text-base sm:text-lg font-bold">{{ downPaymentAmount.toFixed(2) }} 万元</div>
           </el-form-item>
         </el-col>
         <el-col :xs="24" :sm="12">
           <el-form-item label="贷款总额">
-            <div class="text-base sm:text-lg font-bold">{{ totalLoanAmount.toLocaleString('zh-CN') }} 元</div>
+            <div class="text-base sm:text-lg font-bold">{{ totalLoanAmount.toFixed(2) }} 万元</div>
             <div class="text-xs sm:text-sm text-gray-500 mt-1">
               (公积金贷款月供不能超过缴费基数的50%，超出部分将使用商业贷款)
             </div>
@@ -233,16 +240,16 @@ const calculate = () => {
               <el-input-number
                 v-model="loan.amount"
                 :min="0"
-                :step="10000"
-                :precision="0"
+                :step="1"
+                :precision="2"
                 controls-position="right"
-                :max="index === 0 ? 1430000 : Infinity"
+                :max="index === 0 ? maxHousingFundLoan : Infinity"
                 class="w-full"
               >
-                <template #append>元</template>
+                <template #append>万元</template>
               </el-input-number>
               <div v-if="index === 0" class="text-xs text-gray-500 mt-1">
-                (公积金贷款上限为{{ maxHousingFundLoan.toLocaleString('zh-CN') }}元)
+                (公积金贷款上限为{{ maxHousingFundLoan.toFixed(2) }}万元)
               </div>
             </el-form-item>
           </el-col>
